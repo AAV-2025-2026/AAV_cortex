@@ -3,8 +3,8 @@
 #include <ElegantOTA.h>
 
 // WiFi credentials
-const char* ssid = "bayshore";
-const char* password = "ottawa17";
+const char* ssid = "YourSSID";
+const char* password = "wifipassword";
 
 #define LED_PIN 2  // Builtin LED
 
