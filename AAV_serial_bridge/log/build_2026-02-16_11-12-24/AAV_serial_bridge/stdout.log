@@ -1,0 +1,34 @@
+running egg_info
+creating build/AAV_serial_bridge/AAV_serial_bridge.egg-info
+writing build/AAV_serial_bridge/AAV_serial_bridge.egg-info/PKG-INFO
+writing dependency_links to build/AAV_serial_bridge/AAV_serial_bridge.egg-info/dependency_links.txt
+writing entry points to build/AAV_serial_bridge/AAV_serial_bridge.egg-info/entry_points.txt
+writing requirements to build/AAV_serial_bridge/AAV_serial_bridge.egg-info/requires.txt
+writing top-level names to build/AAV_serial_bridge/AAV_serial_bridge.egg-info/top_level.txt
+writing manifest file 'build/AAV_serial_bridge/AAV_serial_bridge.egg-info/SOURCES.txt'
+reading manifest file 'build/AAV_serial_bridge/AAV_serial_bridge.egg-info/SOURCES.txt'
+writing manifest file 'build/AAV_serial_bridge/AAV_serial_bridge.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/build
+creating /home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/build/lib
+creating /home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/build/lib/AAV_serial_bridge
+copying AAV_serial_bridge/uart_bridge.py -> /home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/build/lib/AAV_serial_bridge
+copying AAV_serial_bridge/__init__.py -> /home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/build/lib/AAV_serial_bridge
+running install
+running install_lib
+creating /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/lib/python3.10/site-packages/AAV_serial_bridge
+copying /home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/build/lib/AAV_serial_bridge/uart_bridge.py -> /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/lib/python3.10/site-packages/AAV_serial_bridge
+copying /home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/build/lib/AAV_serial_bridge/__init__.py -> /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/lib/python3.10/site-packages/AAV_serial_bridge
+byte-compiling /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/lib/python3.10/site-packages/AAV_serial_bridge/uart_bridge.py to uart_bridge.cpython-310.pyc
+byte-compiling /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/lib/python3.10/site-packages/AAV_serial_bridge/__init__.py to __init__.cpython-310.pyc
+running install_data
+creating /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/share/ament_index
+creating /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/share/ament_index/resource_index
+creating /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/share/ament_index/resource_index/packages
+copying resource/AAV_serial_bridge -> /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/share/ament_index/resource_index/packages
+copying package.xml -> /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/share/AAV_serial_bridge
+running install_egg_info
+Copying build/AAV_serial_bridge/AAV_serial_bridge.egg-info to /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/lib/python3.10/site-packages/AAV_serial_bridge-0.0.0-py3.10.egg-info
+running install_scripts
+writing list of installed files to '/home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/install.log'

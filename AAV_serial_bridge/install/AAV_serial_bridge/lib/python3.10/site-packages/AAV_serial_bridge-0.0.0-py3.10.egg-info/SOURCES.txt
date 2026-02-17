@@ -1,0 +1,16 @@
+package.xml
+setup.cfg
+setup.py
+AAV_serial_bridge/__init__.py
+AAV_serial_bridge/uart_bridge.py
+build/AAV_serial_bridge/AAV_serial_bridge.egg-info/PKG-INFO
+build/AAV_serial_bridge/AAV_serial_bridge.egg-info/SOURCES.txt
+build/AAV_serial_bridge/AAV_serial_bridge.egg-info/dependency_links.txt
+build/AAV_serial_bridge/AAV_serial_bridge.egg-info/entry_points.txt
+build/AAV_serial_bridge/AAV_serial_bridge.egg-info/requires.txt
+build/AAV_serial_bridge/AAV_serial_bridge.egg-info/top_level.txt
+build/AAV_serial_bridge/AAV_serial_bridge.egg-info/zip-safe
+resource/AAV_serial_bridge
+test/test_copyright.py
+test/test_flake8.py
+test/test_pep257.py

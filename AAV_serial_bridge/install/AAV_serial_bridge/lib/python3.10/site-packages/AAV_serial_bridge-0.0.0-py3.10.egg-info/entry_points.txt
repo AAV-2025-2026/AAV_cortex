@@ -1,0 +1,3 @@
+[console_scripts]
+uart_bridge = AAV_serial_bridge.uart_bridge:main
+

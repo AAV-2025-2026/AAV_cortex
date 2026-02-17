@@ -1,0 +1,36 @@
+[0.590s] Invoking command in '/home/sk/Desktop/AAV_serial_bridge': PYTHONPATH=/home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base build/AAV_serial_bridge build --build-base /home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/build install --record /home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/install.log --single-version-externally-managed install_data
+[0.799s] running egg_info
+[0.799s] creating build/AAV_serial_bridge/AAV_serial_bridge.egg-info
+[0.799s] writing build/AAV_serial_bridge/AAV_serial_bridge.egg-info/PKG-INFO
+[0.799s] writing dependency_links to build/AAV_serial_bridge/AAV_serial_bridge.egg-info/dependency_links.txt
+[0.800s] writing entry points to build/AAV_serial_bridge/AAV_serial_bridge.egg-info/entry_points.txt
+[0.800s] writing requirements to build/AAV_serial_bridge/AAV_serial_bridge.egg-info/requires.txt
+[0.800s] writing top-level names to build/AAV_serial_bridge/AAV_serial_bridge.egg-info/top_level.txt
+[0.800s] writing manifest file 'build/AAV_serial_bridge/AAV_serial_bridge.egg-info/SOURCES.txt'
+[0.801s] reading manifest file 'build/AAV_serial_bridge/AAV_serial_bridge.egg-info/SOURCES.txt'
+[0.802s] writing manifest file 'build/AAV_serial_bridge/AAV_serial_bridge.egg-info/SOURCES.txt'
+[0.802s] running build
+[0.802s] running build_py
+[0.802s] creating /home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/build
+[0.802s] creating /home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/build/lib
+[0.802s] creating /home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/build/lib/AAV_serial_bridge
+[0.802s] copying AAV_serial_bridge/uart_bridge.py -> /home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/build/lib/AAV_serial_bridge
+[0.802s] copying AAV_serial_bridge/__init__.py -> /home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/build/lib/AAV_serial_bridge
+[0.803s] running install
+[0.803s] running install_lib
+[0.804s] creating /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/lib/python3.10/site-packages/AAV_serial_bridge
+[0.804s] copying /home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/build/lib/AAV_serial_bridge/uart_bridge.py -> /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/lib/python3.10/site-packages/AAV_serial_bridge
+[0.804s] copying /home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/build/lib/AAV_serial_bridge/__init__.py -> /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/lib/python3.10/site-packages/AAV_serial_bridge
+[0.805s] byte-compiling /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/lib/python3.10/site-packages/AAV_serial_bridge/uart_bridge.py to uart_bridge.cpython-310.pyc
+[0.805s] byte-compiling /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/lib/python3.10/site-packages/AAV_serial_bridge/__init__.py to __init__.cpython-310.pyc
+[0.805s] running install_data
+[0.806s] creating /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/share/ament_index
+[0.806s] creating /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/share/ament_index/resource_index
+[0.806s] creating /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/share/ament_index/resource_index/packages
+[0.806s] copying resource/AAV_serial_bridge -> /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/share/ament_index/resource_index/packages
+[0.806s] copying package.xml -> /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/share/AAV_serial_bridge
+[0.806s] running install_egg_info
+[0.807s] Copying build/AAV_serial_bridge/AAV_serial_bridge.egg-info to /home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/lib/python3.10/site-packages/AAV_serial_bridge-0.0.0-py3.10.egg-info
+[0.808s] running install_scripts
+[0.826s] writing list of installed files to '/home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/install.log'
+[0.849s] Invoked command in '/home/sk/Desktop/AAV_serial_bridge' returned '0': PYTHONPATH=/home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/sk/Desktop/AAV_serial_bridge/install/AAV_serial_bridge/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base build/AAV_serial_bridge build --build-base /home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/build install --record /home/sk/Desktop/AAV_serial_bridge/build/AAV_serial_bridge/install.log --single-version-externally-managed install_data
