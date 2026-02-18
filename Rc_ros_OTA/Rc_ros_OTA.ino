@@ -1,12 +1,12 @@
-// ESP32: ROS2 UART + iBUS RC Override + OTA
+// ESP32: ROS2 UART + iBUS RC Override + HTTP OTA
 #include <IBusBM.h>
 #include <WiFi.h>
 #include <WebServer.h>
-#include <ElegantOTA.h>
+#include <HTTPUpdateServer.h>  // Built-in, no extra library!
 
 // WiFi credentials
-const char* ssid = "YourSSID";
-const char* password = "wifipassword";
+const char* ssid = "your_ssid";
+const char* password = "your_password";
 
 #define LED_PIN 2
 #define IBUS_RX_PIN 32
@@ -21,6 +21,7 @@ const char* password = "wifipassword";
 
 IBusBM ibus;
 WebServer server(80);
+HTTPUpdateServer httpUpdater;  // Replaces ElegantOTA
 
 // Current state
 float current_steering = 0.0;
@@ -43,11 +44,23 @@ void publishStatus() {
     Serial1.flush();
 }
 
+void handleStatus() {
+    String html = "<html><body>";
+    html += "<h2>ESP32 AAV Status</h2>";
+    html += "<p>Steering: " + String(current_steering, 2) + "</p>";
+    html += "<p>Speed: "    + String(current_speed,    2) + "</p>";
+    html += "<p>Accel: "    + String(current_accel,    2) + "</p>";
+    html += "<p>IP: "       + WiFi.localIP().toString() + "</p>";
+    html += "<p><a href='/update'>OTA Update</a></p>";
+    html += "</body></html>";
+    server.send(200, "text/html", html);
+}
+
 void setup() {
     Serial.begin(115200);
     delay(1000);
     
-    Serial.println("\n=== ESP32: ROS2 + iBUS RC Override + OTA ===");
+    Serial.println("\n=== ESP32: ROS2 + iBUS RC Override + HTTP OTA ===");
     
     // ROS2 UART on Serial1 (GPIO16 RX, GPIO17 TX)
     Serial1.begin(115200, SERIAL_8N1, 16, 17);
@@ -69,7 +82,7 @@ void setup() {
     ledcWrite(0, 0);
     Serial.println("✓ LED PWM ready");
     
-    // ========== OTA SETUP (NEW) ==========
+    // ========== HTTP OTA SETUP ==========
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
     Serial.print("WiFi connecting");
@@ -85,9 +98,16 @@ void setup() {
         Serial.print("IP: ");
         Serial.println(WiFi.localIP());
         
-        ElegantOTA.begin(&server);
+        server.on("/",       HTTP_GET, handleStatus);
+        server.on("/status", HTTP_GET, handleStatus);
+        
+        httpUpdater.setup(&server);  // Mounts /update endpoint
         server.begin();
-        Serial.print("✓ OTA: http://");
+        
+        Serial.print("✓ Status: http://");
+        Serial.print(WiFi.localIP());
+        Serial.println("/");
+        Serial.print("✓ OTA:    http://");
         Serial.print(WiFi.localIP());
         Serial.println("/update");
     } else {
@@ -102,10 +122,9 @@ void loop() {
     static uint8_t buf[13];
     static uint8_t idx = 0;
     
-    // ========== OTA HANDLER (NEW) ==========
-    server.handleClient();
-    ElegantOTA.loop();
-    // =======================================
+    // ========== OTA HANDLER ==========
+    server.handleClient();  // Handles /update + /status (no ElegantOTA.loop() needed!)
+    // =================================
     
     ibus.loop();
     
@@ -114,17 +133,17 @@ void loop() {
     
     if (rc_mode) {
         // =============== RC MODE ===============
-        uint16_t throttle_rc = ibus.readChannel(THR_RC_CH);
-        uint16_t steering_rc = ibus.readChannel(STR_RC_CH);
+        uint16_t throttle_rc    = ibus.readChannel(THR_RC_CH);
+        uint16_t steering_rc    = ibus.readChannel(STR_RC_CH);
         uint16_t drive_mode_raw = ibus.readChannel(DRIVE_MODE_CH);
         
-        current_speed = 0.0;
+        current_speed    = 0.0;
         current_steering = 0.0;
-        current_accel = 0.0;
+        current_accel    = 0.0;
         ledcWrite(0, 0);
         
-        if (throttle_rc > 100 && throttle_rc < 2200 && 
-            steering_rc > 100 && steering_rc < 2200 && 
+        if (throttle_rc    > 100 && throttle_rc    < 2200 && 
+            steering_rc    > 100 && steering_rc    < 2200 && 
             drive_mode_raw > 100 && drive_mode_raw < 2200) {
             
             int drive_mode = 0;
@@ -135,17 +154,17 @@ void loop() {
             }
             
             current_steering = map(steering_rc, 1000, 2000, -100, 100) / 100.0;
-            float throttle = map(throttle_rc, 1000, 2000, -100, 100) / 100.0;
+            float throttle   = map(throttle_rc, 1000, 2000, -100, 100) / 100.0;
             
             switch(drive_mode) {
-                case 0:
+                case 0:  // BRAKE
                     current_speed = 0.0;
                     current_accel = -1.0;
                     ledcWrite(0, 0);
                     Serial.printf("RC BRAKE: steer=%.2f\n", current_steering);
                     break;
                     
-                case 1:
+                case 1:  // FORWARD
                     if (throttle < -0.05) {
                         current_speed = throttle;
                         current_accel = 0.0;
@@ -157,7 +176,7 @@ void loop() {
                     }
                     break;
                     
-                case 2:
+                case 2:  // REVERSE
                     if (throttle < -0.05) {
                         current_speed = throttle;
                         current_accel = 0.0;
@@ -189,9 +208,9 @@ void loop() {
                 
                 if (idx >= 13) {
                     float steering, speed, accel;
-                    memcpy(&steering, buf, 4);
-                    memcpy(&speed, buf + 4, 4);
-                    memcpy(&accel, buf + 8, 4);
+                    memcpy(&steering, buf,     4);
+                    memcpy(&speed,    buf + 4, 4);
+                    memcpy(&accel,    buf + 8, 4);
                     uint8_t checksum = buf[12];
                     
                     uint8_t calc = 0;
@@ -199,8 +218,8 @@ void loop() {
                     
                     if (calc == checksum) {
                         current_steering = steering;
-                        current_speed = speed;
-                        current_accel = accel;
+                        current_speed    = speed;
+                        current_accel    = accel;
                         
                         int pwm = constrain((int)(abs(speed) * 255), 0, 255);
                         ledcWrite(0, pwm);
