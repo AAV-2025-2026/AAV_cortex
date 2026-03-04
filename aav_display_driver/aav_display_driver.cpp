@@ -318,7 +318,7 @@ int main() {
     gpio_set_dir(SPI_CS_PIN, GPIO_OUT);
     gpio_put(SPI_CS_PIN, 1);
     max7219_init();
-    matrix_display(pat_smile);
+    matrix_display(pat_smile)
 
     // LCD
     lcd.init();
