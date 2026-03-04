@@ -32,7 +32,6 @@
 #define LCD_D5_PIN        10
 #define LCD_D6_PIN        11
 #define LCD_D7_PIN        12
-#define LCD_BACKLIGHT_PIN 6
 
 // ===== MAX7219 SPI =====
 #define SPI_PORT     spi1
@@ -48,7 +47,15 @@
 #define REG_SHUTDOWN    0x0C
 #define REG_DISPLAYTEST 0x0F
 
-#define BTN_DEBOUNCE_US 200000
+// ===== Button + Buzzer =====
+#define BUTTON_PIN 5
+#define BUZZER_PIN 6
+
+// ===== LED_BUILTIN (GPIO 25) =====
+#define LED_BUILTIN_PIN 25
+
+#define BTN_DEBOUNCE_US     200000
+#define EXT_BTN_DEBOUNCE_US 200000
 
 // ============================================================================
 
@@ -60,11 +67,13 @@ uint8_t led_pins[10] = {
 LCDdisplay lcd(LCD_D4_PIN, LCD_D5_PIN, LCD_D6_PIN, LCD_D7_PIN,
                LCD_RS_PIN, LCD_E_PIN, 16, 2);
 
-volatile int      count         = 5;
-volatile bool     enc_moved     = false;
-volatile bool     btn_pressed   = false;
-volatile uint8_t  last_state    = 0;
-volatile uint32_t last_btn_time = 0;
+volatile int      count             = 5;
+volatile bool     enc_moved         = false;
+volatile bool     btn_pressed       = false;
+volatile bool     ext_btn_pressed   = false;
+volatile uint8_t  last_state        = 0;
+volatile uint32_t last_btn_time     = 0;
+volatile uint32_t last_ext_btn_time = 0;
 
 uint pwm_slice;
 
@@ -84,7 +93,18 @@ uint8_t pat_heart[8] = {
     0b00000000, 0b01100110, 0b11111111, 0b11111111,
     0b01111110, 0b00111100, 0b00011000, 0b00000000
 };
-uint8_t pat_current[8];   // active pattern on matrix
+uint8_t pat_current[8];
+
+// ============================================================================
+// BUZZER (active buzzer — just GPIO HIGH/LOW)
+// ============================================================================
+void beep(uint duration_ms) {
+    irq_set_enabled(IO_IRQ_BANK0, false);
+    gpio_put(BUZZER_PIN, 1);
+    sleep_ms(duration_ms);
+    gpio_put(BUZZER_PIN, 0);
+    irq_set_enabled(IO_IRQ_BANK0, true);
+}
 
 // ============================================================================
 // MAX7219
@@ -97,11 +117,11 @@ void max7219_write(uint8_t reg, uint8_t data) {
 }
 
 void max7219_init() {
-    max7219_write(REG_SHUTDOWN,    0x01);  // normal operation
-    max7219_write(REG_DISPLAYTEST, 0x00);  // no test
-    max7219_write(REG_SCAN_LIMIT,  0x07);  // all 8 rows
-    max7219_write(REG_DECODE_MODE, 0x00);  // raw pixel mode
-    max7219_write(REG_INTENSITY,   0x08);  // mid brightness
+    max7219_write(REG_SHUTDOWN,    0x01);
+    max7219_write(REG_DISPLAYTEST, 0x00);
+    max7219_write(REG_SCAN_LIMIT,  0x07);
+    max7219_write(REG_DECODE_MODE, 0x00);
+    max7219_write(REG_INTENSITY,   0x08);
     for (int i = 1; i <= 8; i++) max7219_write(i, 0x00);
 }
 
@@ -116,18 +136,13 @@ void matrix_clear() {
     memset(pat_current, 0, 8);
 }
 
-void matrix_set_brightness(uint8_t level) {  // 0–15
+void matrix_set_brightness(uint8_t level) {
     max7219_write(REG_INTENSITY, level & 0x0F);
 }
 
 // ============================================================================
-// LCD
+// LED BAR + LCD
 // ============================================================================
-void contrast_set(int level) {
-    uint16_t duty = (uint16_t)(((10 - level) / 10.0f) * 65535);
-    pwm_set_gpio_level(LCD_BACKLIGHT_PIN, duty);
-}
-
 void bar_set(int level) {
     for (int i = 0; i < 10; i++)
         gpio_put(led_pins[i], i < level);
@@ -141,14 +156,15 @@ void lcd_refresh() {
 
 // ============================================================================
 // Serial Protocol:
-//   L1:text          → LCD row 1
-//   L2:text          → LCD row 2
-//   M:smile          → dot matrix: smile
-//   M:heart          → dot matrix: heart
-//   M:checker        → dot matrix: checker
-//   M:clear          → dot matrix: clear
-//   M:raw:XXXXXXXX   → dot matrix: 8 hex bytes (e.g. M:raw:3C4281818181423C)
-//   MB:0-15          → dot matrix brightness
+//   L1:text              → LCD row 1
+//   L2:text              → LCD row 2
+//   M:smile              → dot matrix: smile
+//   M:heart              → dot matrix: heart
+//   M:checker            → dot matrix: checker
+//   M:clear              → dot matrix: clear
+//   M:raw:XXXXXXXXXXXXXXXX → dot matrix: 8 hex bytes
+//   MB:0-15              → dot matrix brightness
+//   BZ:ms                → trigger buzzer for N milliseconds
 // ============================================================================
 void handle_serial() {
     static char buf[40];
@@ -161,7 +177,6 @@ void handle_serial() {
         buf[idx] = '\0';
         idx = 0;
 
-        // ── LCD ──
         if (strncmp(buf, "L1:", 3) == 0) {
             snprintf(row0, sizeof(row0), "%-16s", buf + 3);
             lcd_refresh();
@@ -172,7 +187,6 @@ void handle_serial() {
             lcd_refresh();
             printf("LCD row 1 → \"%s\"\n", row1);
 
-        // ── Matrix patterns ──
         } else if (strcmp(buf, "M:smile") == 0) {
             matrix_display(pat_smile);
             printf("Matrix → smile\n");
@@ -189,7 +203,6 @@ void handle_serial() {
             matrix_clear();
             printf("Matrix → cleared\n");
 
-        // ── Raw hex pattern: M:raw:3C4281818181423C ──
         } else if (strncmp(buf, "M:raw:", 6) == 0) {
             const char* hex = buf + 6;
             if (strlen(hex) == 16) {
@@ -211,14 +224,22 @@ void handle_serial() {
                 printf("M:raw needs exactly 16 hex chars\n");
             }
 
-        // ── Matrix brightness: MB:0 to MB:15 ──
         } else if (strncmp(buf, "MB:", 3) == 0) {
             int level = atoi(buf + 3);
             if (level >= 0 && level <= 15) {
                 matrix_set_brightness((uint8_t)level);
                 printf("Matrix brightness → %d\n", level);
             } else {
-                printf("MB: range is 0–15\n");
+                printf("MB: range is 0-15\n");
+            }
+
+        } else if (strncmp(buf, "BZ:", 3) == 0) {
+            int ms = atoi(buf + 3);
+            if (ms > 0 && ms <= 5000) {
+                beep(ms);
+                printf("Buzzer → %dms\n", ms);
+            } else {
+                printf("BZ: range is 1-5000ms\n");
             }
 
         } else if (strlen(buf) > 0) {
@@ -227,6 +248,7 @@ void handle_serial() {
             printf("  M:smile | M:heart | M:checker | M:clear\n");
             printf("  M:raw:XXXXXXXXXXXXXXXX  (16 hex chars)\n");
             printf("  MB:0-15  (matrix brightness)\n");
+            printf("  BZ:ms    (buzzer duration 1-5000ms)\n");
         }
 
     } else {
@@ -236,7 +258,7 @@ void handle_serial() {
 }
 
 // ============================================================================
-// ENCODER IRQ
+// IRQ — Encoder + Encoder Button + External Button
 // ============================================================================
 void pot_irq(uint gpio, uint32_t events) {
 
@@ -258,7 +280,6 @@ void pot_irq(uint gpio, uint32_t events) {
 
         last_state = current_state;
         bar_set(count);
-        contrast_set(count);
     }
 
     if (gpio == POT_SW_PIN) {
@@ -268,7 +289,13 @@ void pot_irq(uint gpio, uint32_t events) {
         count = 5;
         btn_pressed = true;
         bar_set(count);
-        contrast_set(count);
+    }
+
+    if (gpio == BUTTON_PIN) {
+        uint32_t now = time_us_32();
+        if ((now - last_ext_btn_time) < EXT_BTN_DEBOUNCE_US) return;
+        last_ext_btn_time = now;
+        ext_btn_pressed = true;
     }
 }
 
@@ -291,14 +318,7 @@ int main() {
     gpio_set_dir(SPI_CS_PIN, GPIO_OUT);
     gpio_put(SPI_CS_PIN, 1);
     max7219_init();
-    matrix_display(pat_smile);      // startup pattern
-
-    // PWM contrast
-    gpio_set_function(LCD_BACKLIGHT_PIN, GPIO_FUNC_PWM);
-    pwm_slice = pwm_gpio_to_slice_num(LCD_BACKLIGHT_PIN);
-    pwm_set_wrap(pwm_slice, 65535);
-    pwm_set_enabled(pwm_slice, true);
-    contrast_set(count);
+    matrix_display(pat_smile);
 
     // LCD
     lcd.init();
@@ -315,16 +335,34 @@ int main() {
         GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true, &pot_irq);
     gpio_set_irq_enabled(POT_DT_PIN,
         GPIO_IRQ_EDGE_FALL | GPIO_IRQ_EDGE_RISE, true);
-    gpio_set_irq_enabled(POT_SW_PIN, GPIO_IRQ_EDGE_FALL, true);
+    gpio_set_irq_enabled(POT_SW_PIN,
+        GPIO_IRQ_EDGE_FALL, true);
 
-    // Startup sweep
+    // External button
+    gpio_init(BUTTON_PIN);
+    gpio_set_dir(BUTTON_PIN, GPIO_IN);
+    gpio_pull_up(BUTTON_PIN);
+    gpio_set_irq_enabled(BUTTON_PIN, GPIO_IRQ_EDGE_FALL, true);
+
+    // Buzzer
+    gpio_init(BUZZER_PIN);
+    gpio_set_dir(BUZZER_PIN, GPIO_OUT);
+    gpio_put(BUZZER_PIN, 0);
+
+    // LED_BUILTIN
+    gpio_init(LED_BUILTIN_PIN);
+    gpio_set_dir(LED_BUILTIN_PIN, GPIO_OUT);
+    gpio_put(LED_BUILTIN_PIN, 1);
+
+    // Startup sweep + beep
     for (int i = 0; i <= 10; i++) { bar_set(i); sleep_ms(60); }
     for (int i = 10; i >= 0; i--) { bar_set(i); sleep_ms(60); }
     bar_set(count);
+    beep(1000);                      // startup confirmation beep
 
     printf("=== All Peripherals Ready ===\n");
     printf("L1:text | L2:text | M:smile | M:heart | M:checker | M:clear\n");
-    printf("M:raw:XXXXXXXXXXXXXXXX | MB:0-15\n");
+    printf("M:raw:XXXXXXXXXXXXXXXX | MB:0-15 | BZ:ms\n");
 
     while (true) {
         handle_serial();
@@ -334,8 +372,13 @@ int main() {
             enc_moved = false;
         }
         if (btn_pressed) {
-            printf("BTN → contrast reset 5/10\n");
+            printf("BTN (encoder) → contrast reset 5/10\n");
             btn_pressed = false;
+        }
+        if (ext_btn_pressed) {
+            beep(1000);              // 100ms beep on button press
+            printf("EXT BTN → beep!\n");
+            ext_btn_pressed = false;
         }
         sleep_ms(10);
     }
