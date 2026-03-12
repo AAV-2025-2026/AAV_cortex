@@ -3,7 +3,7 @@
 #include "hardware_configs.h"
 #include "websoc_serial/websoc_serial.h"
 
-static uint16_t current_dac;
+uint32_t current_dac = 0;
 
 void writeDAC(uint16_t value) {
     value &= 0x3FF;
@@ -29,12 +29,14 @@ void ext_digitalWrite(uint8_t pin, bool value) {
 }
 
 void writeDACRamped(uint16_t target) {
-    target = constrain(target, DAC_MIN, DAC_MAX_CAP);  // hard cap
+    int32_t tgt = constrain((int32_t)target, (int32_t)DAC_MIN, (int32_t)DAC_MAX_CAP);
 
-    if (target > current_dac) {
-        current_dac = min((uint16_t)(current_dac + ACCEL_STEP), target);
-    } else if (target < current_dac) {
-        current_dac = max((uint16_t)(current_dac - DECEL_STEP), target);
-    }
-    writeDAC(current_dac);
+    if (current_dac < tgt)
+        current_dac = min((int32_t)(current_dac + ACCEL_STEP), tgt);
+    else if (current_dac > tgt)
+        current_dac = max((int32_t)(current_dac - DECEL_STEP), tgt);
+
+    current_dac = constrain(current_dac, (int32_t)0, (int32_t)DAC_MAX_CAP);
+    writeDAC((uint16_t)current_dac);
+    USER_SERIAL.printf("DAC hw write: %d\n", current_dac);
 }

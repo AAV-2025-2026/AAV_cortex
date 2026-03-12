@@ -33,7 +33,7 @@ void handleRCMode() {
 
         switch (drive_mode) {
             case 0: // BRAKE
-                writeDAC(0);
+                writeDACRamped(0);
                 setBrake(JRK_MAX);
                 ext_digitalWrite(DIR_PIN, HIGH);
                 current_speed = 0.0;
@@ -52,7 +52,8 @@ void handleRCMode() {
                     USER_SERIAL.printf("RC FWD: steer=%.2f speed=%.2f DAC=%d\n",
                                        current_steering, current_speed, dac_val);
                 } else {
-                    writeDAC(0);
+                    writeDACRamped(0);   // ← ramp down, not hard cut
+                    current_speed = 0.0;
                     USER_SERIAL.println("RC FWD: IDLE");
                 }
                 break;
@@ -68,7 +69,8 @@ void handleRCMode() {
                     USER_SERIAL.printf("RC REV: steer=%.2f speed=%.2f DAC=%d\n",
                                        current_steering, current_speed, dac_val);
                 } else {
-                    writeDAC(0);
+                    writeDACRamped(0);   // ← ramp down, not hard cut
+                    current_speed = 0.0;
                     USER_SERIAL.println("RC REV: IDLE");
                 }
                 break;
